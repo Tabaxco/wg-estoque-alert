@@ -2,6 +2,7 @@ package com.wg.wgestoquealert.job;
 
 import com.wg.wgestoquealert.client.VanguardClient;
 import com.wg.wgestoquealert.dto.ProdutoVariacaoDTO;
+import com.wg.wgestoquealert.store.AlertaStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,11 +17,14 @@ public class AlertaEstoqueJob {
     private static final Logger log = LoggerFactory.getLogger(AlertaEstoqueJob.class);
 
     private final VanguardClient vanguardClient;
+    private final AlertaStore alertaStore;
     private final long limite;
 
     public AlertaEstoqueJob(VanguardClient vanguardClient,
+                            AlertaStore alertaStore,
                             @Value("${alerta.estoque.limite}") long limite) {
         this.vanguardClient = vanguardClient;
+        this.alertaStore = alertaStore;
         this.limite = limite;
     }
 
@@ -28,6 +32,7 @@ public class AlertaEstoqueJob {
     public void verificarEstoque() {
         try {
             List<ProdutoVariacaoDTO> baixos = vanguardClient.buscarEstoqueBaixo(limite);
+            alertaStore.atualizar(baixos);
 
             if (baixos.isEmpty()) {
                 log.info("Estoque OK: nenhuma variação com {} unidades ou menos.", limite);
